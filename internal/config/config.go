@@ -27,7 +27,7 @@ func Read() Config {
 		log.Fatalf("Unable to read config file: %s", err.Error())
 	}
 
-	err = json.Unmarshal(contentBytes, cfg)
+	err = json.Unmarshal(contentBytes, &cfg)
 	if err != nil {
 		log.Fatalf("Unable to unmarshal config: %s", err.Error())
 	}
@@ -60,7 +60,7 @@ func getConfigFilePath() (string, error) {
 		return "", err
 	}
 
-	path := fmt.Sprintf("%s%s", homeDir, CONFIG_FILE)
+	path := fmt.Sprintf("%s/%s", homeDir, CONFIG_FILE)
 
 	return path, nil
 }
