@@ -1,18 +1,32 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/Shobhit-Nagpal/blog-aggregator/internal/config"
+	"github.com/Shobhit-Nagpal/blog-aggregator/internal/db"
+	"github.com/google/uuid"
+	_ "github.com/lib/pq"
 )
 
 func main() {
 	cfg := config.Read()
 
+	conn, err := sql.Open("postgres", cfg.DBUrl)
+	if err != nil {
+		log.Fatalf("Couldn't connect to database: %s\n", err.Error())
+	}
+
+	dbQueries := db.New(conn)
+
 	s := &state{
+		db:  dbQueries,
 		cfg: &cfg,
 	}
 
@@ -21,6 +35,7 @@ func main() {
 	}
 
 	cmds.register("login", handlerLogin)
+	cmds.register("register", handlerRegister)
 
 	args := os.Args
 	if len(args) < 2 {
@@ -32,14 +47,15 @@ func main() {
 		args: os.Args[2:],
 	}
 
-  err := cmds.run(s, cmd)
-  if err != nil {
-    log.Fatal(err)
-  }
+	err = cmds.run(s, cmd)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 }
 
 type state struct {
+	db  *db.Queries
 	cfg *config.Config
 }
 
@@ -64,17 +80,45 @@ func handlerLogin(s *state, cmd command) error {
 	return nil
 }
 
+func handlerRegister(s *state, cmd command) error {
+	if len(cmd.args) == 0 {
+		return errors.New("No name provided")
+	}
+
+	id := uuid.New()
+	created_at := time.Now()
+	updated_at := time.Now()
+
+	params := db.CreateUserParams{
+		ID:        id,
+		CreatedAt: created_at,
+		UpdatedAt: updated_at,
+		Name:      cmd.args[0],
+	}
+
+  user, err := s.db.CreateUser(context.Background(), params)
+  if err != nil {
+    return err
+  }
+
+  s.cfg.CurrentUserName = user.Name
+
+  fmt.Println("User created successfully!")
+
+	return nil
+}
+
 func (c *commands) register(name string, f func(*state, command) error) {
 	c.handlers[name] = f
 }
 
 func (c *commands) run(s *state, cmd command) error {
 	if handler, exists := c.handlers[cmd.name]; exists {
-    err := handler(s, cmd)
-    if err != nil {
-      return err
-    }
-    return nil
+		err := handler(s, cmd)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	return errors.New("Handler does not exist for commmand given")
