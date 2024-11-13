@@ -73,7 +73,12 @@ func handlerLogin(s *state, cmd command) error {
 		return errors.New("No username provided")
 	}
 
-	s.cfg.SetUser(cmd.args[0])
+  user, err := s.db.GetUser(context.Background(), cmd.args[0])
+  if err != nil {
+    return err
+  }
+
+	s.cfg.SetUser(user.Name)
 
 	fmt.Println("User has been set!")
 
@@ -101,9 +106,10 @@ func handlerRegister(s *state, cmd command) error {
     return err
   }
 
-  s.cfg.CurrentUserName = user.Name
+  s.cfg.SetUser(cmd.args[0])
 
   fmt.Println("User created successfully!")
+  fmt.Println(user)
 
 	return nil
 }
