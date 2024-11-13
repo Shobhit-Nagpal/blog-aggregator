@@ -66,3 +66,14 @@ func handlerReset(s *state, cmd command) error {
 
   return nil
 }
+
+func handlerUsers(s *state, cmd command) error {
+  users, err := s.db.GetUsers(context.Background())
+  if err != nil {
+    return err
+  }
+
+  printUsers(users, s.cfg.CurrentUserName)
+
+  return nil
+}
