@@ -1,17 +1,13 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/Shobhit-Nagpal/blog-aggregator/internal/config"
 	"github.com/Shobhit-Nagpal/blog-aggregator/internal/db"
-	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
 
@@ -36,6 +32,7 @@ func main() {
 
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
+  cmds.register("reset", handlerReset)
 
 	args := os.Args
 	if len(args) < 2 {
@@ -66,52 +63,6 @@ type command struct {
 
 type commands struct {
 	handlers map[string]func(*state, command) error
-}
-
-func handlerLogin(s *state, cmd command) error {
-	if len(cmd.args) == 0 {
-		return errors.New("No username provided")
-	}
-
-  user, err := s.db.GetUser(context.Background(), cmd.args[0])
-  if err != nil {
-    return err
-  }
-
-	s.cfg.SetUser(user.Name)
-
-	fmt.Println("User has been set!")
-
-	return nil
-}
-
-func handlerRegister(s *state, cmd command) error {
-	if len(cmd.args) == 0 {
-		return errors.New("No name provided")
-	}
-
-	id := uuid.New()
-	created_at := time.Now()
-	updated_at := time.Now()
-
-	params := db.CreateUserParams{
-		ID:        id,
-		CreatedAt: created_at,
-		UpdatedAt: updated_at,
-		Name:      cmd.args[0],
-	}
-
-  user, err := s.db.CreateUser(context.Background(), params)
-  if err != nil {
-    return err
-  }
-
-  s.cfg.SetUser(cmd.args[0])
-
-  fmt.Println("User created successfully!")
-  fmt.Println(user)
-
-	return nil
 }
 
 func (c *commands) register(name string, f func(*state, command) error) {
