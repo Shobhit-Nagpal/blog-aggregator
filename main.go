@@ -14,12 +14,12 @@ import (
 func main() {
 	cfg := config.Read()
 
-	conn, err := sql.Open("postgres", cfg.DBUrl)
+	database, err := sql.Open("postgres", cfg.DBUrl)
 	if err != nil {
 		log.Fatalf("Couldn't connect to database: %s\n", err.Error())
 	}
 
-	dbQueries := db.New(conn)
+	dbQueries := db.New(database)
 
 	s := &state{
 		db:  dbQueries,
@@ -34,6 +34,7 @@ func main() {
 	cmds.register("register", handlerRegister)
   cmds.register("reset", handlerReset)
   cmds.register("users", handlerUsers)
+  cmds.register("agg", handlerAggregate)
 
 	args := os.Args
 	if len(args) < 2 {

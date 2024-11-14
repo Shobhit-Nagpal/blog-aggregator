@@ -7,8 +7,11 @@ import (
 	"time"
 
 	"github.com/Shobhit-Nagpal/blog-aggregator/internal/db"
+	"github.com/Shobhit-Nagpal/blog-aggregator/internal/rss"
 	"github.com/google/uuid"
 )
+
+const FEED_URL = "https://www.wagslane.dev/index.xml"
 
 func handlerLogin(s *state, cmd command) error {
 	if len(cmd.args) == 0 {
@@ -74,6 +77,17 @@ func handlerUsers(s *state, cmd command) error {
   }
 
   printUsers(users, s.cfg.CurrentUserName)
+
+  return nil
+}
+
+func handlerAggregate(s *state, cmd command) error {
+  feed, err := rss.FetchFeed(context.Background(), FEED_URL)
+  if err != nil {
+    return err
+  }
+
+  fmt.Println(feed)
 
   return nil
 }
