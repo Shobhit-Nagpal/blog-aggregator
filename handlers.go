@@ -91,3 +91,41 @@ func handlerAggregate(s *state, cmd command) error {
 
   return nil
 }
+
+func handleAddFeed(s *state, cmd command) error {
+  username := s.cfg.CurrentUserName
+  user, err := s.db.GetUser(context.Background(), username)
+  if err != nil {
+    return err
+  }
+
+	if len(cmd.args) < 2 {
+		return errors.New("Missing args to add feed")
+	}
+
+  name := cmd.args[0]
+  url := cmd.args[1]
+
+	id := uuid.New()
+	created_at := time.Now()
+	updated_at := time.Now()
+
+	params := db.CreateFeedParams{
+		ID:        id,
+		CreatedAt: created_at,
+		UpdatedAt: updated_at,
+    Name: name,
+    Url: url,
+    UserID: user.ID,
+	}
+
+
+  feed, err := s.db.CreateFeed(context.Background(), params)
+  if err != nil {
+    return err
+  }
+
+  fmt.Println(feed)
+
+  return nil
+}
