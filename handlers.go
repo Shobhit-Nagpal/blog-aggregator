@@ -18,10 +18,10 @@ func handlerLogin(s *state, cmd command) error {
 		return errors.New("No username provided")
 	}
 
-  user, err := s.db.GetUser(context.Background(), cmd.args[0])
-  if err != nil {
-    return err
-  }
+	user, err := s.db.GetUser(context.Background(), cmd.args[0])
+	if err != nil {
+		return err
+	}
 
 	s.cfg.SetUser(user.Name)
 
@@ -46,65 +46,65 @@ func handlerRegister(s *state, cmd command) error {
 		Name:      cmd.args[0],
 	}
 
-  user, err := s.db.CreateUser(context.Background(), params)
-  if err != nil {
-    return err
-  }
+	user, err := s.db.CreateUser(context.Background(), params)
+	if err != nil {
+		return err
+	}
 
-  s.cfg.SetUser(cmd.args[0])
+	s.cfg.SetUser(cmd.args[0])
 
-  fmt.Println("User created successfully!")
-  fmt.Println(user)
+	fmt.Println("User created successfully!")
+	fmt.Println(user)
 
 	return nil
 }
 
 func handlerReset(s *state, cmd command) error {
-  err := s.db.DeleteAllUsers(context.Background())
-  if err != nil {
-    return err
-  }
+	err := s.db.DeleteAllUsers(context.Background())
+	if err != nil {
+		return err
+	}
 
-  fmt.Println("All users have been deleted")
+	fmt.Println("All users have been deleted")
 
-  return nil
+	return nil
 }
 
 func handlerUsers(s *state, cmd command) error {
-  users, err := s.db.GetUsers(context.Background())
-  if err != nil {
-    return err
-  }
+	users, err := s.db.GetUsers(context.Background())
+	if err != nil {
+		return err
+	}
 
-  printUsers(users, s.cfg.CurrentUserName)
+	printUsers(users, s.cfg.CurrentUserName)
 
-  return nil
+	return nil
 }
 
 func handlerAggregate(s *state, cmd command) error {
-  feed, err := rss.FetchFeed(context.Background(), FEED_URL)
-  if err != nil {
-    return err
-  }
+	feed, err := rss.FetchFeed(context.Background(), FEED_URL)
+	if err != nil {
+		return err
+	}
 
-  fmt.Println(feed)
+	fmt.Println(feed)
 
-  return nil
+	return nil
 }
 
-func handleAddFeed(s *state, cmd command) error {
-  username := s.cfg.CurrentUserName
-  user, err := s.db.GetUser(context.Background(), username)
-  if err != nil {
-    return err
-  }
+func handlerAddFeed(s *state, cmd command) error {
+	username := s.cfg.CurrentUserName
+	user, err := s.db.GetUser(context.Background(), username)
+	if err != nil {
+		return err
+	}
 
 	if len(cmd.args) < 2 {
 		return errors.New("Missing args to add feed")
 	}
 
-  name := cmd.args[0]
-  url := cmd.args[1]
+	name := cmd.args[0]
+	url := cmd.args[1]
 
 	id := uuid.New()
 	created_at := time.Now()
@@ -114,18 +114,35 @@ func handleAddFeed(s *state, cmd command) error {
 		ID:        id,
 		CreatedAt: created_at,
 		UpdatedAt: updated_at,
-    Name: name,
-    Url: url,
-    UserID: user.ID,
+		Name:      name,
+		Url:       url,
+		UserID:    user.ID,
 	}
 
+	feed, err := s.db.CreateFeed(context.Background(), params)
+	if err != nil {
+		return err
+	}
 
-  feed, err := s.db.CreateFeed(context.Background(), params)
-  if err != nil {
-    return err
-  }
+	fmt.Println(feed)
 
-  fmt.Println(feed)
+	return nil
+}
 
-  return nil
+func handlerFeeds(s *state, cmd command) error {
+	feeds, err := s.db.GetFeeds(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, feed := range feeds {
+		user, err := s.db.GetUserById(context.Background(), feed.UserID)
+		if err != nil {
+			return err
+		}
+
+    fmt.Printf("----Feed----\n\nName: %s\nURL: %s\nUsername: %s\n\n", feed.Name, feed.Url, user.Name)
+	}
+
+	return nil
 }
