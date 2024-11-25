@@ -92,12 +92,7 @@ func handlerAggregate(s *state, cmd command) error {
 	return nil
 }
 
-func handlerAddFeed(s *state, cmd command) error {
-	username := s.cfg.CurrentUserName
-	user, err := s.db.GetUser(context.Background(), username)
-	if err != nil {
-		return err
-	}
+func handlerAddFeed(s *state, cmd command, user db.User) error {
 
 	if len(cmd.args) < 2 {
 		return errors.New("Missing args to add feed")
@@ -159,7 +154,7 @@ func handlerFeeds(s *state, cmd command) error {
 	return nil
 }
 
-func handlerFollow(s *state, cmd command) error {
+func handlerFollow(s *state, cmd command, user db.User) error {
 
 	if len(cmd.args) == 0 {
 		return errors.New("Missing args to follow feed")
@@ -168,12 +163,6 @@ func handlerFollow(s *state, cmd command) error {
 	url := cmd.args[0]
 
 	feed, err := s.db.GetFeedByUrl(context.Background(), url)
-	if err != nil {
-		return err
-	}
-
-	username := s.cfg.CurrentUserName
-	user, err := s.db.GetUser(context.Background(), username)
 	if err != nil {
 		return err
 	}
@@ -201,12 +190,7 @@ func handlerFollow(s *state, cmd command) error {
 	return nil
 }
 
-func handlerFollowing(s *state, cmd command) error {
-	username := s.cfg.CurrentUserName
-	user, err := s.db.GetUser(context.Background(), username)
-	if err != nil {
-		return err
-	}
+func handlerFollowing(s *state, cmd command, user db.User) error {
 
 	followFeed, err := s.db.GetFeedFollowsForUser(context.Background(), user.ID)
 	if err != nil {
