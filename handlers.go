@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/Shobhit-Nagpal/blog-aggregator/internal/db"
@@ -86,14 +87,14 @@ func handlerAggregate(s *state, cmd command) error {
 		return errors.New("Missing args -> time between req")
 	}
 
-  timeBetweenRequests, err := time.ParseDuration(cmd.args[0])
-  if err != nil {
-    return err
-  }
+	timeBetweenRequests, err := time.ParseDuration(cmd.args[0])
+	if err != nil {
+		return err
+	}
 
 	ticker := time.NewTicker(timeBetweenRequests)
 
-  fmt.Printf("Collecting feeds every %s\n\n", cmd.args[0])
+	fmt.Printf("Collecting feeds every %s\n\n", cmd.args[0])
 
 	for ; ; <-ticker.C {
 		scrapeFeeds(s)
@@ -238,6 +239,33 @@ func handlerUnfollow(s *state, cmd command, user db.User) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func handlerBrowse(s *state, cmd command, user db.User) error {
+	var limit int32
+	var err error
+
+	if len(cmd.args) == 0 {
+		limit = 2
+	} else {
+    limit64, err := strconv.ParseInt(cmd.args[0], 10, 32)
+		if err != nil {
+			return err
+		}
+
+    limit = int32(limit64)
+	}
+
+	posts, err := s.db.GetPostsForUser(context.Background(), limit)
+	if err != nil {
+		return err
+	}
+
+  for _, post := range posts {
+    fmt.Printf("%s\n%s\nLink: %s\n\n%s\n\n\n", post.Title, post.PublishedAt, post.Url, post.Description.String)
+  } 
 
 	return nil
 }
