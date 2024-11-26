@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Shobhit-Nagpal/blog-aggregator/internal/db"
-	"github.com/Shobhit-Nagpal/blog-aggregator/internal/rss"
 	"github.com/google/uuid"
 )
 
@@ -82,14 +81,23 @@ func handlerUsers(s *state, cmd command) error {
 }
 
 func handlerAggregate(s *state, cmd command) error {
-	feed, err := rss.FetchFeed(context.Background(), FEED_URL)
-	if err != nil {
-		return err
+
+	if len(cmd.args) == 0 {
+		return errors.New("Missing args -> time between req")
 	}
 
-	fmt.Println(feed)
+  timeBetweenRequests, err := time.ParseDuration(cmd.args[0])
+  if err != nil {
+    return err
+  }
 
-	return nil
+	ticker := time.NewTicker(timeBetweenRequests)
+
+  fmt.Printf("Collecting feeds every %s\n\n", cmd.args[0])
+
+	for ; ; <-ticker.C {
+		scrapeFeeds(s)
+	}
 }
 
 func handlerAddFeed(s *state, cmd command, user db.User) error {
